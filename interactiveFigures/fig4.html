@@ -1,0 +1,28 @@
+<head>
+  <!-- Plotly.js -->
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.0/rangeslider.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+  <div class="showcase__section" id="bubble">
+    <div class="spacer --small"></div>
+    <div id="bubbleplots">
+      <div class="bubbleplot" data-num="0">
+        <div class="plot" id="plotdiv"></div>
+        Model: <select class="modelChoice"></select> &nbsp; &nbsp;
+        Parameter <select class="paramChoice"></select> <br>
+        Sigma: <select class="sigmaChoice"></select> &nbsp; &nbsp;
+        TRes: <select class="tResChoice"></select> &nbsp; &nbsp;
+        <input name="MaxTxt" type="text" maxlength="6" id="maxTxt" class="climTextbox" placeholder="Maximum Value"/>
+        <input type="checkbox" class="climCheckbox" value="customLim">Use as Max Value<br>
+      </div>
+    </div>
+  </div>
+
+  <script type="text/javascript" charset="utf-8" src="fig4.js"></script>
+</body>
