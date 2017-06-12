@@ -109,7 +109,7 @@ for (var i = 1; i <= 11; i++) {
   sigmaChoices.push(i);
 }
 
-modelChoices = ['TM','RTM','RRM','CRRM','ETM','ERTM','ERRM','CERRM'];
+modelChoices = ['TM','RRM','CRRM','ETM','ERRM','CERRM'];
 paramChoices = ['KTrans','ve','kep','vp'];
 
 var innerContainer = document.querySelector('[data-num="0"'),
