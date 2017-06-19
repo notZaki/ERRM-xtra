@@ -83,6 +83,7 @@ function updatePlot(chosenModel, chosenParam, chosenNoise, chosenTRes, chosenMax
     var data = [trace1];
 
     var layout = {
+      title: 'Percent error in ' + chosenParam + ' from ' + chosenModel,
       height: 600,
       width: 600,
       xaxis: {
@@ -109,7 +110,7 @@ for (var i = 1; i <= 11; i++) {
   sigmaChoices.push(i);
 }
 
-modelChoices = ['TM','RRM','CRRM','ETM','ERRM','CERRM'];
+modelChoices = ['TM','RRM','ETM','ERRM','CERRM'];
 paramChoices = ['KTrans','ve','kep','vp'];
 
 var innerContainer = document.querySelector('[data-num="0"'),
