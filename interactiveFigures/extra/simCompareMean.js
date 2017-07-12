@@ -1,4 +1,4 @@
-Plotly.d3.csv('https://raw.githubusercontent.com/MPUmri/ERRM/master/dataResults/e03a-downsampleMapResultsMean.csv', function(err, rows){
+﻿Plotly.d3.csv('https://raw.githubusercontent.com/notZaki/ERRM/master/dataResults/e03a-downsampleMapResultsMean.csv?token=AImhIRoS_PLFwvb8AXwCihFOwtVVsCg1ks5Zb7BawA%3D%3D', function(err, rows){
 
   function unpack(rows, key) {
     return rows.map(function(row) { return row[key]; });
