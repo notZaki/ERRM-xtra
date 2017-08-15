@@ -1,0 +1,55 @@
+<head>
+  <!-- Plotly.js -->
+  <script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/rangeslider.js/2.3.0/rangeslider.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+  <div class="showcase__section" id="bubble">
+    <div class="spacer --small"></div>
+    <div id="bubbleplots">
+      <div class="bubbleplot" data-num="0">
+        <div class="plot" id="plotdiv"></div>
+        Model: <select class="modelChoice"></select> &nbsp; &nbsp;
+        Parameter <select class="paramChoice"></select> <br>
+        Sigma: <select class="sigmaChoice"></select> &nbsp; &nbsp;
+        TRes: <select class="tResChoice"></select> &nbsp; &nbsp;
+        <input name="MaxTxt" type="text" maxlength="6" id="maxTxt" class="climTextbox" placeholder="Maximum Value"/>
+        <input type="checkbox" class="climCheckbox" value="customLim">Use as Max Value<br>
+      </div>
+    </div>
+  </div>
+
+  <p>
+    To produce maps in manuscript: 
+    <li> set 'Model' to either ERRM or CERRM </li>
+    <li> set 'Parameter' to kep </li>
+    <li> set 'Sigma' and 'TRes' to 1 </li>
+    <li> enter 0.2 as 'Maximum Value' </li>
+  </p>
+
+  <p>
+    Options for 'Model' are: 
+    <li> Tofts Model (TM) </li>
+    <li> Reference Region Model (RRM) </li>
+    <li> Extended Tofts Model (ETM) </li>
+    <li> Extended Reference Region Model (ERRM) </li>
+    <li> Constrained Extended Reference Region Model (CERRM) </li>
+  </p>
+
+  <p> The 'sigma' option is just an index, and covers the noise range of stdDev = 0:0.01:0.1 mM. <br>
+  So 1 = noiseless, 2 = 0.01 mM noise, 3 = 0.02 mM noise, etc.
+  </p>
+
+  <p>
+    The 'Maximum Value' option sets the limits of the colourscale. <br>
+    Any regions with an absolute percent error greater than the max value will be set to black. <br>
+    If no value is entered, then the absolute max will be used by default
+  </p>
+
+  <script type="text/javascript" charset="utf-8" src="fig4.js"></script>
+</body>

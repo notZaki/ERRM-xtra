@@ -1,158 +1,379 @@
-function updatePlot(chosenModel, chosenParam, chosenNoise, chosenTRes, chosenMax, useOwnMax){
+﻿Plotly.d3.csv('https://raw.githubusercontent.com/notZaki/ERRM/master/dataResults/e03b-downsampleMapResultsQuantiles.csv?token=AImhIZxq4tSgsBXxNcR1Vefz9vXX-mooks5ZnLfUwA%3D%3D', function(err, rows){
 
-  baseURL = 'https://raw.githubusercontent.com/notZaki/ERRM-xtra/master/mapDownsampleJSon/'
-  fileName = 'errMap-' + chosenModel + '-Noise-' + chosenNoise + '-TRes-' + chosenTRes + '.json'
-  chosenURL = baseURL + fileName;
-
-  Plotly.d3.json(chosenURL, function(figure) {
-
-    var myCScale = [
-      ['0.0','rgb(24  79 162)'],
-      ['0.1','rgb(70  99 174)'],
-      ['0.2','rgb(109,153,206)'],
-      ['0.3','rgb(160,190,225)'],
-      ['0.4','rgb(207,226,240)'],
-      ['0.5','rgb(241,244,245)'],
-      ['0.6','rgb(244,218,200)'],
-      ['0.7','rgb(248,184,139)'],
-      ['0.8','rgb(225,146, 65)'],
-      ['0.9','rgb(187,120, 54)'],
-      ['1.0','rgb(144,100, 44)']
-    ];
-
-    var myCScaleB = [
-      ['0.0','rgb(30,30,30)'],
-      ['0.00000000001','rgb(24,79,162)'],
-      ['0.1','rgb(70,99,174)'],
-      ['0.2','rgb(109,153,206)'],
-      ['0.3','rgb(160,190,225)'],
-      ['0.4','rgb(207,226,240)'],
-      ['0.5','rgb(241,244,245)'],
-      ['0.6','rgb(244,218,200)'],
-      ['0.7','rgb(248,184,139)'],
-      ['0.8','rgb(225,146, 65)'],
-      ['0.9','rgb(187,120, 54)'],
-      ['0.99999999999','rgb(144,100, 44)'],
-      ['1.0','rgb(0,0,0)']
-    ];
-
-    var valX = ['ve=0.1, vp=0.001','ve=0.2, vp=0.001','ve=0.3, vp=0.001','ve=0.4, vp=0.001','ve=0.5, vp=0.001',
-    've=0.1, vp=0.005','ve=0.2, vp=0.005','ve=0.3, vp=0.005','ve=0.4, vp=0.005','ve=0.5, vp=0.005',
-    've=0.1, vp=0.01','ve=0.2, vp=0.01','ve=0.3, vp=0.01','ve=0.4, vp=0.01','ve=0.5, vp=0.01',
-    've=0.1, vp=0.05','ve=0.2, vp=0.05','ve=0.3, vp=0.05','ve=0.4, vp=0.05','ve=0.5, vp=0.05',
-    've=0.1, vp=0.1','ve=0.2, vp=0.1','ve=0.3, vp=0.1','ve=0.4, vp=0.1','ve=0.5, vp=0.1',
-    've=0.1, vp=0.2','ve=0.2, vp=0.2','ve=0.3, vp=0.2','ve=0.4, vp=0.2','ve=0.5, vp=0.2'];
-    var valY = ['Kt=0.05','Kt=0.15','Kt=0.25','Kt=0.35','Kt=0.45','Kt=0.55'];
-
-    switch(chosenParam) {
-      case 've':
-        chosenMap = figure.ve;
-        break;
-      case 'vp':
-        chosenMap = figure.vp;
-        break;
-      case 'kep':
-        chosenMap = figure.kep;
-        break;
-      default:
-        chosenMap = figure.KTrans;
-        break;
+    function unpack(rows, key) {
+        return rows.map(function(row) { return row[key]; });
     }
 
-    array = [].concat.apply([],chosenMap);
-    maxVal = Math.max.apply(null, array.map(Math.abs));
-    if (useOwnMax === false || chosenMax==0 ) {
-      maxVal = maxVal;
-    } else {
-      maxVal = chosenMax;
-      myCScale = myCScaleB;
+    function unpackNum(rows, key) {
+        return rows.map(function(row) { return Number(row[key]); });
     }
 
-    trace1 = {
-      z: chosenMap,
-      x: valX,
-      y: valY,
-      colorscale: myCScale,
-      type: 'heatmap',
-      zmin:-maxVal,
-      zmax:maxVal,
-      xgap:2,
-      ygap:2
-    };
+  var fitMethods = unpack(rows,'FitMethod'),
+    allTemporalRes = unpackNum(rows,'TemporalRes'),
+    allErrKt = unpack(rows, 'q50Kt'),
+    allErrKep = unpack(rows, 'q50Kep'),
+    allErrVe = unpack(rows, 'q50Ve'),
+    allErrVp = unpack(rows, 'q50Vp'),
+    allq25Kt = unpack(rows, 'q25Kt'),
+    allq75Kt = unpack(rows, 'q75Kt'),
+    allq25Kep = unpack(rows, 'q25Kep'),
+    allq75Kep = unpack(rows, 'q75Kep'),
+    allq25Ve = unpack(rows, 'q25Ve'),
+    allq75Ve = unpack(rows, 'q75Ve'),
+    allq25Vp = unpack(rows, 'q25Vp'),
+    allq75Vp = unpack(rows, 'q75Vp'),
+    allSigmaC = unpackNum(rows,'sigmaC')
+    listofParams = ['KTrans','kep','ve','vp'];
 
-    var data = [trace1];
+  var currentSigma = allSigmaC.filter(function(item, i, ar){ return ar.indexOf(item) === i; });
+  var tResChoices = allTemporalRes.filter(function(item, i, ar){ return ar.indexOf(item) === i; });
+  var modelChoices = fitMethods.filter(function(item, i, ar){ return ar.indexOf(item) === i; })
 
-    var layout = {
-      title: 'Percent error in ' + chosenParam + ' from ' + chosenModel,
-      height: 600,
-      width: 600,
-      xaxis: {
-        tickvals: ['ve=0.3, vp=0.001','ve=0.3, vp=0.005','ve=0.3, vp=0.01','ve=0.3, vp=0.05','ve=0.3, vp=0.1','ve=0.3, vp=0.2'],
-        ticktext: ['vp=0.001','vp=0.005','vp=0.01','vp=0.05','vp=0.1','vp=0.2']
+  currentSigma2 = [];
+  for (var i = 0, len = currentSigma.length; i < len; i++) {
+    currentSigma2[i]=currentSigma[i]+0.001;
+  }
+
+  function getParamData(chosenModelA,chosenModelB,chosenTRes) {
+    currentErrKt1 = [];
+    currentErrKep1 = [];
+    currentErrVe1 = [];
+    currentErrVp1 = [];
+
+    currentErrKt2 = [];
+    currentErrKep2 = [];
+    currentErrVe2 = [];
+    currentErrVp2 = [];
+
+    currentq25Kt1 = [];
+    currentq25Kep1 = [];
+    currentq25Ve1 = [];
+    currentq25Vp1 = [];
+
+    currentq25Kt2 = [];
+    currentq25Kep2 = [];
+    currentq25Ve2 = [];
+    currentq25Vp2 = [];
+
+    currentq75Kt1 = [];
+    currentq75Kep1 = [];
+    currentq75Ve1 = [];
+    currentq75Vp1 = [];
+
+    currentq75Kt2 = [];
+    currentq75Kep2 = [];
+    currentq75Ve2 = [];
+    currentq75Vp2 = [];
+
+    for (var i = 0 ; i < allSigmaC.length ; i++){
+      if ( fitMethods[i] === chosenModelA && allTemporalRes[i]==chosenTRes) {
+        currentErrKt1.push(allErrKt[i]);
+        currentq25Kt1.push(allErrKt[i]-allq25Kt[i]);
+        currentq75Kt1.push(allq75Kt[i]-allErrKt[i]);
+        currentErrKep1.push(allErrKep[i]);
+        currentq25Kep1.push(allErrKt[i]-allq25Kep[i]);
+        currentq75Kep1.push(allq75Kep[i]-allErrKt[i]);
+        currentErrVe1.push(allErrVe[i]);
+        currentq25Ve1.push(allErrKt[i]-allq25Ve[i]);
+        currentq75Ve1.push(allq75Ve[i]-allErrKt[i]);
+        currentErrVp1.push(allErrVp[i]);
+        currentq25Vp1.push(allErrKt[i]-allq25Vp[i]);
+        currentq75Vp1.push(allq75Vp[i]-allErrKt[i]);
+      } if ( fitMethods[i] === chosenModelB && allTemporalRes[i]==chosenTRes) {
+        currentErrKt2.push(allErrKt[i]);
+        currentq25Kt2.push(allErrKt[i]-allq25Kt[i]);
+        currentq75Kt2.push(allq75Kt[i]-allErrKt[i]);
+        currentErrKep2.push(allErrKep[i]);
+        currentq25Kep2.push(allErrKt[i]-allq25Kep[i]);
+        currentq75Kep2.push(allq75Kep[i]-allErrKt[i]);
+        currentErrVe2.push(allErrVe[i]);
+        currentq25Ve2.push(allErrKt[i]-allq25Ve[i]);
+        currentq75Ve2.push(allq75Ve[i]-allErrKt[i]);
+        currentErrVp2.push(allErrVp[i]);
+        currentq25Vp2.push(allErrKt[i]-allq25Vp[i]);
+        currentq75Vp2.push(allq75Vp[i]-allErrKt[i]);
       }
     }
+  };
+
+var colA = '#ff9955';
+var colB = '#7e2f8e';
+
+var lineW = 3;
+var errW = 10;
+
+// Default Country Data
+setBubblePlot('ERRM','CERRM',1);
+
+function setBubblePlot(chosenModelA,chosenModelB,chosenTRes) {
+    getParamData(chosenModelA,chosenModelB,chosenTRes);
+
+    var trace11 = {
+      name: chosenModelA,
+      legendgroup: chosenModelA,
+      x: currentSigma,
+      y: currentErrKt1,
+      mode: 'lines+markers',
+      type: 'scatter',
+      line: {
+        color: colA,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Kt1,
+        arrayminus: currentq25Kt1,
+        color: colA,
+        thickness : lineW,
+        width : errW,
+        visible: true
+      }
+    };
+
+    var trace12 = {
+      name: chosenModelB,
+      legendgroup: chosenModelB,
+      x: currentSigma2,
+      y: currentErrKt2,
+      mode: 'lines+markers',
+      type: 'scatter',
+      line: {
+        color: colB,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Kt2,
+        arrayminus: currentq25Kt2,
+        color: colB,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace21 = {
+      name: chosenModelA,
+      legendgroup: chosenModelA,
+      x: currentSigma,
+      y: currentErrKep1,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x2',
+      yaxis:'y2',
+      showlegend: false,
+      line: {
+        color: colA,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Kep1,
+        arrayminus: currentq25Kep1,
+        color: colA,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace22 = {
+      name: chosenModelB,
+      legendgroup: chosenModelB,
+      x: currentSigma2,
+      y: currentErrKep2,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x2',
+      yaxis:'y2',
+      showlegend: false,
+      line: {
+        color: colB,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Kep2,
+        arrayminus: currentq25Kep2,
+        color: colB,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace31 = {
+      name: chosenModelA,
+      legendgroup: chosenModelA,
+      x: currentSigma,
+      y: currentErrVe1,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x3',
+      yaxis:'y3',
+      showlegend: false,
+      line: {
+        color: colA,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Ve1,
+        arrayminus: currentq25Ve1,
+        color: colA,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace32 = {
+      name: chosenModelB,
+      legendgroup: chosenModelB,
+      x: currentSigma,
+      y: currentErrVe2,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x3',
+      yaxis:'y3',
+      showlegend: false,
+      line: {
+        color: colB,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Ve2,
+        arrayminus: currentq25Ve2,
+        color: colB,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace41 = {
+      name: chosenModelA,
+      legendgroup: chosenModelA,
+      x: currentSigma,
+      y: currentErrVp1,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x4',
+      yaxis:'y4',
+      showlegend: false,
+      line: {
+        color: colA,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Vp1,
+        arrayminus: currentq25Vp1,
+        color: colA,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var trace42 = {
+      name: chosenModelB,
+      legendgroup: chosenModelB,
+      x: currentSigma2,
+      y: currentErrVp2,
+      mode: 'lines+markers',
+      type: 'scatter',
+      xaxis:'x4',
+      yaxis:'y4',
+      showlegend: false,
+      line: {
+        color: colB,
+        width: lineW
+      },
+      error_y:{
+        type: 'data',
+        symmetric: false,
+        array: currentq75Vp2,
+        arrayminus: currentq25Vp2,
+        color: colB,
+        thickness : lineW,
+        width : errW,
+        visible:true
+      }
+    };
+
+    var data = [trace11,trace12,trace21,trace22,trace31,trace32,trace41,trace42];
+
+    var layout = {
+      height: 800,
+      xaxis: {domain: [0, 0.45],hoverformat: '.2f'},
+      yaxis: {domain: [0.55, 1],hoverformat: '.2f',title: '%Error in K<sup>Trans</sup>'},
+      xaxis4: {
+        domain: [0.55, 1],
+        hoverformat: '.2f',
+        title: 'σ [mM]',
+        anchor: 'y4'
+      },
+      xaxis3: {
+        domain: [0, 0.45],
+        hoverformat: '.2f',
+        title: 'σ [mM]',
+        anchor: 'y3'
+      },
+      xaxis2: {domain: [0.55, 1],hoverformat: '.2f'},
+      yaxis2: {
+        domain: [0.55, 1],
+        hoverformat: '.2f',
+        title: '%Error in k<sub>ep</sub>',
+        anchor: 'x2'
+      },
+      yaxis3: {domain: [0, 0.45],hoverformat: '.2f',title: '%Error in v<sub>e</sub>'},
+      yaxis4: {
+        domain: [0, 0.45],
+        hoverformat: '.2f',
+        title: '%Error in v<sub>p</sub>',
+        anchor: 'x4'
+      },
+      title: 'Percent Error for TRes = ' + chosenTRes
+    };
 
     Plotly.newPlot('plotdiv', data, layout);
-  });
-}
-
-updatePlot('CERRM','KTrans',2, 1, 0, false)
-
-
-var tResChoices = [];
-for (var i = 1; i <= 60; i++) {
-  tResChoices.push(i);
-}
-
-//var noiseChoices = [0,0.01,0.02,0.03,0.04,0.05,0.06,0.07,0.08,0.09,0.1]
-var sigmaChoices = [];
-for (var i = 1; i <= 11; i++) {
-  sigmaChoices.push(i);
-}
-
-modelChoices = ['TM','RRM','ETM','ERRM','CERRM'];
-paramChoices = ['KTrans','ve','kep','vp'];
+};
 
 var innerContainer = document.querySelector('[data-num="0"'),
-plotEl = innerContainer.querySelector('.plot'),
-modelSelector = innerContainer.querySelector('.modelChoice');
-paramSelector = innerContainer.querySelector('.paramChoice');
-sigmaSelector = innerContainer.querySelector('.sigmaChoice');
-tResSelector = innerContainer.querySelector('.tResChoice');
-climCheckbox = innerContainer.querySelector('.climCheckbox');
-climTextbox = innerContainer.querySelector('.climTextbox');
+    plotEl = innerContainer.querySelector('.plot'),
+    tResSelector = innerContainer.querySelector('.tResChoice');
+    modelSelectorA = innerContainer.querySelector('.modelChoiceA');
+    modelSelectorB = innerContainer.querySelector('.modelChoiceB');
 
 function assignOptions(textArray, selector) {
   for (var i = 0; i < textArray.length;  i++) {
-    var currentOption = document.createElement('option');
-    currentOption.text = textArray[i];
-    selector.appendChild(currentOption);
+      var currentOption = document.createElement('option');
+      currentOption.text = textArray[i];
+      selector.appendChild(currentOption);
   }
 }
 
-assignOptions(modelChoices,modelSelector);
-assignOptions(paramChoices,paramSelector);
-assignOptions(sigmaChoices,sigmaSelector);
 assignOptions(tResChoices,tResSelector);
-
-modelSelector.value = 'CERRM';
-paramSelector.value = 'KTrans';
-sigmaSelector.value = 2;
+assignOptions(modelChoices,modelSelectorA);
+assignOptions(modelChoices,modelSelectorB);
 tResSelector.value = 1;
+modelSelectorA.value = 'ERRM';
+modelSelectorB.value = 'CERRM';
 
 function updateParams(){
-  updatePlot(modelSelector.value,paramSelector.value,sigmaSelector.value,tResSelector.value,climTextbox.value,climCheckbox.checked);
+    setBubblePlot(modelSelectorA.value,modelSelectorB.value,tResSelector.value);
 }
 
-function textboxCallBack(){
-  climCheckbox.checked=true;
-  updateParams()
-}
-
-
-modelSelector.addEventListener('change', updateParams, false);
-paramSelector.addEventListener('change', updateParams, false);
-sigmaSelector.addEventListener('change', updateParams, false);
 tResSelector.addEventListener('change', updateParams, false);
-climCheckbox.addEventListener('change', updateParams, false);
-climTextbox.addEventListener('change', textboxCallBack, false);
+modelSelectorA.addEventListener('change', updateParams, false);
+modelSelectorB.addEventListener('change', updateParams, false);
+});
