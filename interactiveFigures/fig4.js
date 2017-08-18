@@ -34,6 +34,14 @@
     currentSigma2[i]=currentSigma[i]+0.001;
   }
 
+  function AminusB(A,B){
+    apb = [];
+    for (var i = 0, len = A.length; i < len; i++) {
+      apb.push(A[i]-B[i]);
+    }
+    return(apb)
+  }
+
   function getParamData(chosenModelA,chosenModelB,chosenTRes) {
     currentErrKt1 = [];
     currentErrKep1 = [];
@@ -68,32 +76,50 @@
     for (var i = 0 ; i < allSigmaC.length ; i++){
       if ( fitMethods[i] === chosenModelA && allTemporalRes[i]==chosenTRes) {
         currentErrKt1.push(allErrKt[i]);
-        currentq25Kt1.push(allErrKt[i]-allq25Kt[i]);
-        currentq75Kt1.push(allq75Kt[i]-allErrKt[i]);
+        currentq25Kt1.push(allq25Kt[i]);
+        currentq75Kt1.push(allq75Kt[i]);
         currentErrKep1.push(allErrKep[i]);
-        currentq25Kep1.push(allErrKt[i]-allq25Kep[i]);
-        currentq75Kep1.push(allq75Kep[i]-allErrKt[i]);
+        currentq25Kep1.push(allq25Kep[i]);
+        currentq75Kep1.push(allq75Kep[i]);
         currentErrVe1.push(allErrVe[i]);
-        currentq25Ve1.push(allErrKt[i]-allq25Ve[i]);
-        currentq75Ve1.push(allq75Ve[i]-allErrKt[i]);
+        currentq25Ve1.push(allq25Ve[i]);
+        currentq75Ve1.push(allq75Ve[i]);
         currentErrVp1.push(allErrVp[i]);
-        currentq25Vp1.push(allErrKt[i]-allq25Vp[i]);
-        currentq75Vp1.push(allq75Vp[i]-allErrKt[i]);
+        currentq25Vp1.push(allq25Vp[i]);
+        currentq75Vp1.push(allq75Vp[i]);
       } if ( fitMethods[i] === chosenModelB && allTemporalRes[i]==chosenTRes) {
         currentErrKt2.push(allErrKt[i]);
-        currentq25Kt2.push(allErrKt[i]-allq25Kt[i]);
-        currentq75Kt2.push(allq75Kt[i]-allErrKt[i]);
+        currentq25Kt2.push(allq25Kt[i]);
+        currentq75Kt2.push(allq75Kt[i]);
         currentErrKep2.push(allErrKep[i]);
-        currentq25Kep2.push(allErrKt[i]-allq25Kep[i]);
-        currentq75Kep2.push(allq75Kep[i]-allErrKt[i]);
+        currentq25Kep2.push(allq25Kep[i]);
+        currentq75Kep2.push(allq75Kep[i]);
         currentErrVe2.push(allErrVe[i]);
-        currentq25Ve2.push(allErrKt[i]-allq25Ve[i]);
-        currentq75Ve2.push(allq75Ve[i]-allErrKt[i]);
+        currentq25Ve2.push(allq25Ve[i]);
+        currentq75Ve2.push(allq75Ve[i]);
         currentErrVp2.push(allErrVp[i]);
-        currentq25Vp2.push(allErrKt[i]-allq25Vp[i]);
-        currentq75Vp2.push(allq75Vp[i]-allErrKt[i]);
+        currentq25Vp2.push(allq25Vp[i]);
+        currentq75Vp2.push(allq75Vp[i]);
       }
     }
+
+    currentq25Kt1 = AminusB(currentErrKt1,currentq25Kt1)
+    currentq75Kt1 = AminusB(currentq75Kt1,currentErrKt1)
+    currentq25Kep1 = AminusB(currentErrKep1,currentq25Kep1)
+    currentq75Kep1 = AminusB(currentq75Kep1,currentErrKep1)
+    currentq25Ve1 = AminusB(currentErrVe1,currentq25Ve1)
+    currentq75Ve1 = AminusB(currentq75Ve1,currentErrVe1)
+    currentq25Vp1 = AminusB(currentErrVp1,currentq25Vp1)
+    currentq75Vp1 = AminusB(currentq75Vp1,currentErrVp1)
+
+    currentq25Kt2 = AminusB(currentErrKt2,currentq25Kt2)
+    currentq75Kt2 = AminusB(currentq75Kt2,currentErrKt2)
+    currentq25Kep2 = AminusB(currentErrKep2,currentq25Kep2)
+    currentq75Kep2 = AminusB(currentq75Kep2,currentErrKep2)
+    currentq25Ve2 = AminusB(currentErrVe2,currentq25Ve2)
+    currentq75Ve2 = AminusB(currentq75Ve2,currentErrVe2)
+    currentq25Vp2 = AminusB(currentErrVp2,currentq25Vp2)
+    currentq75Vp2 = AminusB(currentq75Vp2,currentErrVp2)
   };
 
 var colA = '#ff9955';
@@ -235,7 +261,7 @@ function setBubblePlot(chosenModelA,chosenModelB,chosenTRes) {
     var trace32 = {
       name: chosenModelB,
       legendgroup: chosenModelB,
-      x: currentSigma,
+      x: currentSigma2,
       y: currentErrVe2,
       mode: 'lines+markers',
       type: 'scatter',
