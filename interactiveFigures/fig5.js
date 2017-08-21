@@ -220,19 +220,19 @@ function updateFigure(chosenModel, chosenParam, chosenSigma, chosenTRes){
         var curX = parseFloat(d3.select(this).attr("x"));
         var curY = parseFloat(d3.select(this).attr("y"));
         // Create text for tooltip
-        g.append("text")
-          .attr("id", "tooltip")
-          .attr("class", "tooltipText")
-          .attr("x", curX)
-          .attr("y", curY)
-          .attr("font-weight", "bold")
-          .attr("fill", "black")
-          .attr("text-anchor", "middle")
-          .text(d);
+        // g.append("text")
+        //   .attr("id", "tooltip")
+        //   .attr("class", "tooltipText")
+        //   .attr("x", curX)
+        //   .attr("y", curY)
+        //   .attr("font-weight", "bold")
+        //   .attr("fill", "black")
+        //   .attr("text-anchor", "middle")
+        //   .text(d);
     })
     .on("mouseout", function(d) {
       // Remove tooltip when mouse hovers off item
-      d3.select("#tooltip").remove();
+      // d3.select("#tooltip").remove();
       // Smoothly fade out the grey outline when mouse hovers off
       d3.select(this)
         .transition()
