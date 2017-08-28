@@ -1,4 +1,4 @@
-Plotly.d3.csv('https://raw.githubusercontent.com/notZaki/ERRM/master/dataResults/e03b-downsampleMapResultsQuantiles.csv?token=AImhIZxq4tSgsBXxNcR1Vefz9vXX-mooks5ZnLfUwA%3D%3D', function(err, rows){
+Plotly.d3.csv('https://raw.githubusercontent.com/MPUmri/ERRM/master/dataResults/e03b-downsampleMapResultsQuantiles.csv', function(err, rows){
 
   function unpack(rows, key) {
     return rows.map(function(row) { return row[key]; });

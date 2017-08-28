@@ -1,405 +1,338 @@
-﻿Plotly.d3.csv('https://raw.githubusercontent.com/notZaki/ERRM/master/dataResults/e03b-downsampleMapResultsQuantiles.csv?token=AImhIZxq4tSgsBXxNcR1Vefz9vXX-mooks5ZnLfUwA%3D%3D', function(err, rows){
+﻿
+// Define the size of figure
+var outerWidth = 325;
+var outerHeight = 700;
+// Define margins - use larger bottom margin to make room for legend
+var margin = { left: 90, top: 30, right: 90, bottom: 140};
+var innerWidth  = outerWidth  - margin.left - margin.right;
+var innerHeight = outerHeight - margin.top  - margin.bottom;
+// Padding between the 'boxes' - Used for both x- and y- padding
+var barPadding = 0.05;
+// Width of each element in the legend
+var legendElementWidth = 20;
 
-    function unpack(rows, key) {
-        return rows.map(function(row) { return row[key]; });
+// Name of the parameter with sup/subscripts
+var textKtrans = "Kᵗʳᵃⁿˢ";
+var textVp = "vₚ";
+var textVe = "vₑ";
+var textKep = "kₑₚ";
+
+// Create the svg canvas
+var vis = d3.select("#plotdiv").append("svg")
+  .attr("width",  outerWidth)
+  .attr("height", outerHeight);
+
+// Create a group object so we can easily transform our heatmap...
+// ... and move it inside the margins
+var g = vis.append("g")
+  .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+// Define the X and Y index for the 120 boxes
+var indX = [];
+var indY = [];
+for (var i = 1; i <= 120; i++) {
+  indX.push(1+Math.floor((i-1)/20)); // X goes up by 1 for every 20 elements
+  indY.push(i%20); // Y goes from 1-20 then repeats
+}
+
+// Define the colourscale, based on: Light, A., and Bartlein, J. (2004) EOS 85.40
+var colourScale =  [
+  'rgb(24,79,162)',
+  'rgb(70,99,174)',
+  'rgb(109,153,206)',
+  'rgb(160,190,225)',
+  'rgb(207,226,240)',
+  'rgb(241,244,245)',
+  'rgb(244,218,200)',
+  'rgb(248,184,139)',
+  'rgb(225,146, 65)',
+  'rgb(187,120, 54)',
+  'rgb(144,100, 44)'
+];
+
+// Define the index for each colour in the colourscale, as fraction values (e.g. 0.4 = 40% of max value)
+var colourScaleInd = [-1.0, -0.8, -0.6, -0.4, -0.2, 0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+// Use above information to define the X, Y, and colour scales to be used by D3
+var xScale = d3.scaleBand()
+  .rangeRound([0, innerWidth])
+  .paddingInner(barPadding)
+  .domain(indX);
+var yScale = d3.scaleBand()
+  .rangeRound([innerHeight, 0])
+  .paddingInner(barPadding)
+  .domain(indY);
+var cScale = d3.scaleLinear()
+  .domain(colourScaleInd)
+  .interpolate(d3.interpolateHcl)
+  .range(colourScale);
+// Scale for the legend
+var legendScale = d3.scaleLinear()
+  .range([-legendElementWidth*5, legendElementWidth*6-1]);
+
+// Define the tick labels for the axes
+var ticksX = [0.05, 0.15, 0.25, 0.35, 0.45, 0.55];
+var ticksYL = ["0.005", "0.01", "0.05", "0.10"];
+var ticksYR = [0.1, 0.2, 0.3, 0.4, 0.5,
+  0.1, 0.2, 0.3, 0.4, 0.5,
+  0.1, 0.2, 0.3, 0.4, 0.5,
+  0.1, 0.2, 0.3, 0.4, 0.5
+];
+
+// Define the scales for the axes
+// X-Axis
+axisScaleX = d3.scaleBand()
+  .rangeRound([0, innerWidth])
+  .domain(ticksX)
+// Y-Axis - Left side - Ticks only
+axisScaleYL = d3.scaleLinear()
+  .range([innerHeight, 0])
+  .domain([0, 20])
+// Y-Axis - Left side - Tick labels only
+axisScaleYL2 = d3.scaleBand()
+  .rangeRound([innerHeight, 0])
+  .domain(ticksYL)
+// Y-Axis - Right side
+axisScaleYR = d3.scaleBand()
+.rangeRound([innerHeight, 0])
+.domain(indY)
+
+// Define the axes
+var axisX = d3.axisBottom(axisScaleX)
+
+var axisYL = d3.axisLeft(axisScaleYL)
+  .tickValues([5.1,10,14.95])
+  .tickSize(10)
+var axisYL2 = d3.axisLeft(axisScaleYL2)
+  .tickSize(0)
+var axisYR = d3.axisRight(axisScaleYR)
+  .tickSizeOuter(0)
+
+var axisLegend = d3.axisBottom(legendScale)
+  .tickSizeOuter(0)
+
+// Make groups of the axes
+var gAxisX = g.append("g")
+  .attr("class", "x axis")
+  .attr("transform", "translate(0," + innerHeight + ")");
+
+var gAxisYL = g.append("g")
+  .attr("class", "y axis");
+var gAxisYL2 = g.append("g")
+  .attr("class", "y axis");
+
+var gAxisYR = g.append("g")
+  .attr("class", "y axis")
+  .attr("transform", "translate(" + innerWidth + ",0)");
+
+// Group for the axes labels and the title
+var gText = g.append("g")
+
+// Group for the legend
+var gLegend = vis.append("g")
+  .attr("class", "y axis")
+  .attr("transform", "translate(" + 0.5*outerWidth + "," + (outerHeight-30) + ")");
+
+// Function to render the figure
+function renderFigure(chosenModel, chosenParam, chosenSigma, chosenTRes){
+
+  // Separate function for creating/updating the heatmap
+  updateFigure(chosenModel, chosenParam, chosenSigma, chosenTRes)
+    
+  // Create the axes
+  gAxisX.call(axisX)
+    .selectAll("text")
+    .attr("x",-xScale.bandwidth()/3)
+    .attr("transform","rotate(-45)")
+    .attr("text-anchor","end");
+  gAxisYL.call(axisYL)
+    .selectAll("text").remove();
+  gAxisYL2.call(axisYL2)
+  gAxisYR.call(axisYR)
+    .selectAll("text")
+    .text(function(d, i){return ticksYR[i];})
+    
+  // Create axes labels
+  gText.append("text")
+    .attr("class", "label")
+    .attr("transform", "translate(" + 0.4*innerWidth + "," + (innerHeight + 70) + ")")
+    .text(textKtrans)
+    
+  gText.append("text")
+    .attr("class", "label")
+    .attr("transform", "translate(-70," + 0.5*innerHeight + ")")
+    .text(textVp)
+    
+  gText.append("text")
+    .attr("class", "label")
+    .attr("transform", "translate(" + (innerWidth + 50) + "," + 0.5*innerHeight + ")")
+    .text(textVe)
+    
+  // Create the colourbar of the legend - text is handled separately by updateFigure()
+  gLegend.selectAll("rect").data(colourScaleInd).enter().append("rect")
+    .attr("width", legendElementWidth)
+    .attr("height", 20)
+    .attr("x", function(d, i) {return d*legendElementWidth*5;})
+    .attr("y", -20)
+    .attr("fill", function (d,i) {return cScale(d/1.0);});
+}
+
+// Function to create/update the heatmap 
+function updateFigure(chosenModel, chosenParam, chosenSigma, chosenTRes){
+  baseURL = 'https://raw.githubusercontent.com/notZaki/ERRM-xtra/master/mapDownsampleJSon/'
+  fileName = 'errMap-' + chosenModel + '-Noise-' + chosenSigma + '-TRes-' + chosenTRes + '.json'
+  chosenURL = baseURL + fileName;
+  
+  d3.json(chosenURL, function(data){
+    
+    // Input is initially an array of arrays (6x20). Convert to a single long array (120 elements).
+    myVals = [].concat.apply([], data[chosenParam]);
+    
+    // Find the maximum value
+    maxVal = Math.max.apply(null, myVals.map(Math.abs));
+    if (climCheckbox.checked === false ||climTextbox.value==0 ) {
+      maxVal = maxVal;
+    } else {
+      maxVal = climTextbox.value;
     }
+    
+    // Delete any previous elements of heatmap
+    //g.selectAll("rect").remove()
+    
+    // Create the boxes for the heatmap
+    var boxes = g.selectAll("rect").data(myVals);
 
-    function unpackNum(rows, key) {
-        return rows.map(function(row) { return Number(row[key]); });
+    boxes.enter().append("rect")
+    .attr("width", xScale.bandwidth())
+    .attr("height", yScale.bandwidth())
+    .attr("x",      function (d, i){return xScale(indX[i]); })
+    .attr("y",      function (d, i){return yScale(indY[i]); })
+    .attr("fill",   function (d, i){return cScale(d/maxVal)})
+    .attr("stroke", "white")
+    .on("mouseover", function(d, i) {
+      d3.select(this)
+        // Outline selected box by grey outline
+        .attr("stroke", "grey")
+        // Assign value to text box 
+        curValTextbox.value = d
+        // Get the x and y positions of current point
+        var curX = parseFloat(d3.select(this).attr("x"));
+        var curY = parseFloat(d3.select(this).attr("y"));
+        // Create text for tooltip
+        // g.append("text")
+        //   .attr("id", "tooltip")
+        //   .attr("class", "tooltipText")
+        //   .attr("x", curX)
+        //   .attr("y", curY)
+        //   .attr("font-weight", "bold")
+        //   .attr("fill", "black")
+        //   .attr("text-anchor", "middle")
+        //   .text(d);
+    })
+    .on("mouseout", function(d) {
+      // Remove tooltip when mouse hovers off item
+      // d3.select("#tooltip").remove();
+      // Smoothly fade out the grey outline when mouse hovers off
+      d3.select(this)
+        .transition()
+        .duration(500)
+        .attr("stroke", "#ffffff");
+      });
+
+    // When loading new data, smoothly update the heatmap colours
+    boxes.transition().duration(1000)
+      .style("fill", function (d, i){return cScale(d/maxVal)})
+
+    // Determine title text
+    switch(chosenParam){
+      case "KTrans":
+        titleText = textKtrans
+        break;
+      case "ve":
+        titleText = textVe
+        break;
+      case "vp":
+        titleText = textVp
+        break;
+      default:
+        titleText = textKep
     }
+    // Create title text
+    d3.select("#titleText").remove();
+    gText.append("text")
+      .attr("id", 'titleText')
+      .attr("class", "title")
+      .text(chosenModel + " - " + titleText);
 
-  var fitMethods = unpack(rows,'FitMethod'),
-    allTemporalRes = unpackNum(rows,'TemporalRes'),
-    allErrKt = unpackNum(rows, 'q50Kt'),
-    allErrKep = unpackNum(rows, 'q50Kep'),
-    allErrVe = unpackNum(rows, 'q50Ve'),
-    allErrVp = unpackNum(rows, 'q50Vp'),
-    allq25Kt = unpackNum(rows, 'q25Kt'),
-    allq75Kt = unpackNum(rows, 'q75Kt'),
-    allq25Kep = unpackNum(rows, 'q25Kep'),
-    allq75Kep = unpackNum(rows, 'q75Kep'),
-    allq25Ve = unpackNum(rows, 'q25Ve'),
-    allq75Ve = unpackNum(rows, 'q75Ve'),
-    allq25Vp = unpackNum(rows, 'q25Vp'),
-    allq75Vp = unpackNum(rows, 'q75Vp'),
-    allSigmaC = unpackNum(rows,'sigmaC')
-    listofParams = ['KTrans','kep','ve','vp'];
+    // Update legend axis
+    legendScale.domain([-maxVal, maxVal])
+    axisLegend.tickValues([-maxVal, 0, maxVal])
+    gLegend.call(axisLegend)
+  });
+}
 
-  var currentSigma = allSigmaC.filter(function(item, i, ar){ return ar.indexOf(item) === i; });
-  var tResChoices = allTemporalRes.filter(function(item, i, ar){ return ar.indexOf(item) === i; });
-  var modelChoices = fitMethods.filter(function(item, i, ar){ return ar.indexOf(item) === i; })
+modelChoices = ['TM','RRM','ETM','ERRM','CERRM','RTM','ERTM','CLRRM'];
+paramChoices = ['KTrans','ve','kep','vp'];
 
-  currentSigma2 = [];
-  for (var i = 0, len = currentSigma.length; i < len; i++) {
-    currentSigma2[i]=currentSigma[i]+0.001;
-  }
+var tResChoices = [];
+for (var i = 1; i <= 60; i++) {
+  tResChoices.push(i);
+}
 
-  function AminusB(A,B){
-    apb = [];
-    for (var i = 0, len = A.length; i < len; i++) {
-      apb.push(A[i]-B[i]);
-    }
-    return(apb)
-  }
+var sigmaChoices = ["0", "0.01", "0.02", "0.03", "0.04", "0.05"];
+var sigmaScale = d3.scaleOrdinal()
+.domain(sigmaChoices)
+.range([1,2,3,4,5,6]);
 
-  function getParamData(chosenModelA,chosenModelB,chosenTRes) {
-    currentErrKt1 = [];
-    currentErrKep1 = [];
-    currentErrVe1 = [];
-    currentErrVp1 = [];
+chosenParam = 'kep'
+chosenModel = 'ERRM'
+chosenSigma = 0
+chosenTRes = 1
 
-    currentErrKt2 = [];
-    currentErrKep2 = [];
-    currentErrVe2 = [];
-    currentErrVp2 = [];
-
-    currentq25Kt1 = [];
-    currentq25Kep1 = [];
-    currentq25Ve1 = [];
-    currentq25Vp1 = [];
-
-    currentq25Kt2 = [];
-    currentq25Kep2 = [];
-    currentq25Ve2 = [];
-    currentq25Vp2 = [];
-
-    currentq75Kt1 = [];
-    currentq75Kep1 = [];
-    currentq75Ve1 = [];
-    currentq75Vp1 = [];
-
-    currentq75Kt2 = [];
-    currentq75Kep2 = [];
-    currentq75Ve2 = [];
-    currentq75Vp2 = [];
-
-    for (var i = 0 ; i < allSigmaC.length ; i++){
-      if ( fitMethods[i] === chosenModelA && allTemporalRes[i]==chosenTRes) {
-        currentErrKt1.push(allErrKt[i]);
-        currentq25Kt1.push(allq25Kt[i]);
-        currentq75Kt1.push(allq75Kt[i]);
-        currentErrKep1.push(allErrKep[i]);
-        currentq25Kep1.push(allq25Kep[i]);
-        currentq75Kep1.push(allq75Kep[i]);
-        currentErrVe1.push(allErrVe[i]);
-        currentq25Ve1.push(allq25Ve[i]);
-        currentq75Ve1.push(allq75Ve[i]);
-        currentErrVp1.push(allErrVp[i]);
-        currentq25Vp1.push(allq25Vp[i]);
-        currentq75Vp1.push(allq75Vp[i]);
-      } if ( fitMethods[i] === chosenModelB && allTemporalRes[i]==chosenTRes) {
-        currentErrKt2.push(allErrKt[i]);
-        currentq25Kt2.push(allq25Kt[i]);
-        currentq75Kt2.push(allq75Kt[i]);
-        currentErrKep2.push(allErrKep[i]);
-        currentq25Kep2.push(allq25Kep[i]);
-        currentq75Kep2.push(allq75Kep[i]);
-        currentErrVe2.push(allErrVe[i]);
-        currentq25Ve2.push(allq25Ve[i]);
-        currentq75Ve2.push(allq75Ve[i]);
-        currentErrVp2.push(allErrVp[i]);
-        currentq25Vp2.push(allq25Vp[i]);
-        currentq75Vp2.push(allq75Vp[i]);
-      }
-    }
-
-    currentq25Kt1 = AminusB(currentErrKt1,currentq25Kt1)
-    currentq75Kt1 = AminusB(currentq75Kt1,currentErrKt1)
-    currentq25Kep1 = AminusB(currentErrKep1,currentq25Kep1)
-    currentq75Kep1 = AminusB(currentq75Kep1,currentErrKep1)
-    currentq25Ve1 = AminusB(currentErrVe1,currentq25Ve1)
-    currentq75Ve1 = AminusB(currentq75Ve1,currentErrVe1)
-    currentq25Vp1 = AminusB(currentErrVp1,currentq25Vp1)
-    currentq75Vp1 = AminusB(currentq75Vp1,currentErrVp1)
-
-    currentq25Kt2 = AminusB(currentErrKt2,currentq25Kt2)
-    currentq75Kt2 = AminusB(currentq75Kt2,currentErrKt2)
-    currentq25Kep2 = AminusB(currentErrKep2,currentq25Kep2)
-    currentq75Kep2 = AminusB(currentq75Kep2,currentErrKep2)
-    currentq25Ve2 = AminusB(currentErrVe2,currentq25Ve2)
-    currentq75Ve2 = AminusB(currentq75Ve2,currentErrVe2)
-    currentq25Vp2 = AminusB(currentErrVp2,currentq25Vp2)
-    currentq75Vp2 = AminusB(currentq75Vp2,currentErrVp2)
-  };
-
-var colA = '#ff9955';
-var colB = '#7e2f8e';
-
-var lineW = 3;
-var errW = 10;
-
-// Default Country Data
-setBubblePlot('ERRM','CERRM',1);
-
-function setBubblePlot(chosenModelA,chosenModelB,chosenTRes) {
-    getParamData(chosenModelA,chosenModelB,chosenTRes);
-
-    var trace11 = {
-      name: chosenModelA,
-      legendgroup: chosenModelA,
-      x: currentSigma,
-      y: currentErrKt1,
-      mode: 'lines+markers',
-      type: 'scatter',
-      line: {
-        color: colA,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Kt1,
-        arrayminus: currentq25Kt1,
-        color: colA,
-        thickness : lineW,
-        width : errW,
-        visible: true
-      }
-    };
-
-    var trace12 = {
-      name: chosenModelB,
-      legendgroup: chosenModelB,
-      x: currentSigma2,
-      y: currentErrKt2,
-      mode: 'lines+markers',
-      type: 'scatter',
-      line: {
-        color: colB,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Kt2,
-        arrayminus: currentq25Kt2,
-        color: colB,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace21 = {
-      name: chosenModelA,
-      legendgroup: chosenModelA,
-      x: currentSigma,
-      y: currentErrKep1,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x2',
-      yaxis:'y2',
-      showlegend: false,
-      line: {
-        color: colA,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Kep1,
-        arrayminus: currentq25Kep1,
-        color: colA,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace22 = {
-      name: chosenModelB,
-      legendgroup: chosenModelB,
-      x: currentSigma2,
-      y: currentErrKep2,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x2',
-      yaxis:'y2',
-      showlegend: false,
-      line: {
-        color: colB,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Kep2,
-        arrayminus: currentq25Kep2,
-        color: colB,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace31 = {
-      name: chosenModelA,
-      legendgroup: chosenModelA,
-      x: currentSigma,
-      y: currentErrVe1,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x3',
-      yaxis:'y3',
-      showlegend: false,
-      line: {
-        color: colA,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Ve1,
-        arrayminus: currentq25Ve1,
-        color: colA,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace32 = {
-      name: chosenModelB,
-      legendgroup: chosenModelB,
-      x: currentSigma2,
-      y: currentErrVe2,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x3',
-      yaxis:'y3',
-      showlegend: false,
-      line: {
-        color: colB,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Ve2,
-        arrayminus: currentq25Ve2,
-        color: colB,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace41 = {
-      name: chosenModelA,
-      legendgroup: chosenModelA,
-      x: currentSigma,
-      y: currentErrVp1,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x4',
-      yaxis:'y4',
-      showlegend: false,
-      line: {
-        color: colA,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Vp1,
-        arrayminus: currentq25Vp1,
-        color: colA,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var trace42 = {
-      name: chosenModelB,
-      legendgroup: chosenModelB,
-      x: currentSigma2,
-      y: currentErrVp2,
-      mode: 'lines+markers',
-      type: 'scatter',
-      xaxis:'x4',
-      yaxis:'y4',
-      showlegend: false,
-      line: {
-        color: colB,
-        width: lineW
-      },
-      error_y:{
-        type: 'data',
-        symmetric: false,
-        array: currentq75Vp2,
-        arrayminus: currentq25Vp2,
-        color: colB,
-        thickness : lineW,
-        width : errW,
-        visible:true
-      }
-    };
-
-    var data = [trace11,trace12,trace21,trace22,trace31,trace32,trace41,trace42];
-
-    var layout = {
-      height: 800,
-      xaxis: {domain: [0, 0.45],hoverformat: '.2f'},
-      yaxis: {domain: [0.55, 1],hoverformat: '.2f',title: '%Error in K<sup>Trans</sup>'},
-      xaxis4: {
-        domain: [0.55, 1],
-        hoverformat: '.2f',
-        title: 'σ [mM]',
-        anchor: 'y4'
-      },
-      xaxis3: {
-        domain: [0, 0.45],
-        hoverformat: '.2f',
-        title: 'σ [mM]',
-        anchor: 'y3'
-      },
-      xaxis2: {domain: [0.55, 1],hoverformat: '.2f'},
-      yaxis2: {
-        domain: [0.55, 1],
-        hoverformat: '.2f',
-        title: '%Error in k<sub>ep</sub>',
-        anchor: 'x2'
-      },
-      yaxis3: {domain: [0, 0.45],hoverformat: '.2f',title: '%Error in v<sub>e</sub>'},
-      yaxis4: {
-        domain: [0, 0.45],
-        hoverformat: '.2f',
-        title: '%Error in v<sub>p</sub>',
-        anchor: 'x4'
-      },
-      title: 'Percent Error for TRes = ' + chosenTRes
-    };
-
-    Plotly.newPlot('plotdiv', data, layout);
-};
-
-var innerContainer = document.querySelector('[data-num="0"'),
-    plotEl = innerContainer.querySelector('.plot'),
-    tResSelector = innerContainer.querySelector('.tResChoice');
-    modelSelectorA = innerContainer.querySelector('.modelChoiceA');
-    modelSelectorB = innerContainer.querySelector('.modelChoiceB');
+var innerContainer = document.querySelector('.container'),
+plotEl = innerContainer.querySelector('.plot'),
+modelSelector = innerContainer.querySelector('.modelChoice');
+paramSelector = innerContainer.querySelector('.paramChoice');
+sigmaSelector = innerContainer.querySelector('.sigmaChoice');
+tResSelector = innerContainer.querySelector('.tResChoice');
+climCheckbox = innerContainer.querySelector('.climCheckbox');
+climTextbox = innerContainer.querySelector('.climTextbox');
+curValTextbox = innerContainer.querySelector('.curVal');
 
 function assignOptions(textArray, selector) {
   for (var i = 0; i < textArray.length;  i++) {
-      var currentOption = document.createElement('option');
-      currentOption.text = textArray[i];
-      selector.appendChild(currentOption);
+    var currentOption = document.createElement('option');
+    currentOption.text = textArray[i];
+    selector.appendChild(currentOption);
   }
 }
 
+assignOptions(modelChoices,modelSelector);
+assignOptions(paramChoices,paramSelector);
+assignOptions(sigmaChoices,sigmaSelector);
 assignOptions(tResChoices,tResSelector);
-assignOptions(modelChoices,modelSelectorA);
-assignOptions(modelChoices,modelSelectorB);
-tResSelector.value = 1;
-modelSelectorA.value = 'ERRM';
-modelSelectorB.value = 'CERRM';
+
+modelSelector.value = chosenModel;
+paramSelector.value = chosenParam;
+sigmaSelector.value = chosenSigma;
+tResSelector.value = chosenTRes;
 
 function updateParams(){
-    setBubblePlot(modelSelectorA.value,modelSelectorB.value,tResSelector.value);
+  updateFigure(modelSelector.value,paramSelector.value,sigmaScale(sigmaSelector.value),tResSelector.value);
 }
 
+function textboxCallBack(){
+  climCheckbox.checked=true;
+  updateParams()
+}
+
+
+modelSelector.addEventListener('change', updateParams, false);
+paramSelector.addEventListener('change', updateParams, false);
+sigmaSelector.addEventListener('change', updateParams, false);
 tResSelector.addEventListener('change', updateParams, false);
-modelSelectorA.addEventListener('change', updateParams, false);
-modelSelectorB.addEventListener('change', updateParams, false);
-});
+climCheckbox.addEventListener('change', updateParams, false);
+climTextbox.addEventListener('change', textboxCallBack, false);
+
+renderFigure(chosenModel, chosenParam, sigmaScale(chosenSigma), chosenTRes)
