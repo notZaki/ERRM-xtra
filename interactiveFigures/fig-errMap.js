@@ -272,7 +272,7 @@ function updateFigure(chosenModel, chosenParam, chosenSigma, chosenTRes){
   });
 }
 
-modelChoices = ['TM','RRM','ETM','ERRM','CERRM','RTM','ERTM','CLRRM'];
+modelChoices = ['TM','RRM','ETM','ERRM','CERRM','CLRRM','RTM','ERTM'];
 paramChoices = ['KTrans','ve','kep','vp'];
 
 var tResChoices = [];
