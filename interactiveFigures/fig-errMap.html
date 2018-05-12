@@ -43,7 +43,7 @@
       display: inline-block; 
       width: 165px; 
       position: fixed;
-      background-color: #fafafa; 
+      /* background-color: #fafafa;  */
       padding: 10px; 
       height: 700px
     }
@@ -69,6 +69,7 @@
     .modelChoice select:focus, .paramChoice select:focus {
       outline: none;
     }
+
     
     
   </style>
@@ -81,7 +82,7 @@
       Model: <select class="modelChoice"></select> <br>
       Parameter: <select class="paramChoice"></select> <br>
       <br>
-      Sigma: <select class="sigmaChoice"></select> <br>
+      Noise: <select class="sigmaChoice"></select> <br>
       TRes: <select class="tResChoice"></select> <br>
       <br>
       <input name="MaxTxt" type="text" maxlength="6" id="maxTxt" class="climTextbox" placeholder="Maximum Value"/> <br>
@@ -89,6 +90,25 @@
       <br>
       <label for="curVal">Recent Percent Error: </label>
       <span><input type="text" readonly="readonly" maxlength="6" class="curVal" /></span>
+    </div>
+    <div>
+    <p>
+      <br/>
+      <b>Notes on Controls:</b>
+      The 'Maximum Value' text box will set the limits for the colourscale. 
+      If it is left empty (default setting) then the largest value in the data will be used.
+      Type 0.1 into that textbox to update the figure, making it resemble the error map 
+      for ERRM shown in Figure 1 of the manuscript.
+      </p> <p>
+      Change the model to 'CERRM' or 'RRM' to see the other two error maps in Figure 1.
+      For the latter, you'll have to change the max value from 0.1 to something higher, e.g. 100,
+      since the RRM has large percent errors.
+      </p><p>
+      The purpose of this figure is to show errors for other parameters that were not shown in manuscript.
+      The standard deviation of noise (in mM) and temporal resolution (in seconds) can also be adjusted.
+      Hover the mouse over the error map and the 'Recent Percent Error' box will show the corresponding percent error.
+
+    </p>
     </div>
   </div>
 </div>
