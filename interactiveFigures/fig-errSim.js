@@ -129,7 +129,7 @@ var lineW = 3;
 var errW = 10;
 
 // Default Country Data
-setBubblePlot('ERRM','CERRM',1);
+setBubblePlot('ERRM','CERRM',5);
 
 function setBubblePlot(chosenModelA,chosenModelB,chosenTRes) {
     getParamData(chosenModelA,chosenModelB,chosenTRes);
@@ -391,7 +391,7 @@ function assignOptions(textArray, selector) {
 assignOptions(tResChoices,tResSelector);
 assignOptions(modelChoices,modelSelectorA);
 assignOptions(modelChoices,modelSelectorB);
-tResSelector.value = 1;
+tResSelector.value = 5;
 modelSelectorA.value = 'ERRM';
 modelSelectorB.value = 'CERRM';
 
